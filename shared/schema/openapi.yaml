@@ -1,0 +1,367 @@
+openapi: 3.0.3
+info:
+  title: Code Evolution Services
+  version: 0.1.0
+servers:
+  - description: Engine Service
+    url: http://localhost:8080
+  - description: Fitness Service
+    url: http://localhost:8090
+paths:
+  /health:
+    get:
+      summary: Engine service health check
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+              example:
+                status: ok
+  /runs:
+    post:
+      summary: Start a new run
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RunConfig'
+            example:
+              seed: 12345
+              population: 50
+              generations: 100
+              mutation_rate: 0.05
+              task: sample-task
+      responses:
+        '200':
+          description: Created run
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  run_id:
+                    type: string
+              example:
+                run_id: stub-run-id
+  /runs/{run_id}:
+    get:
+      summary: Get run state
+      parameters:
+        - in: path
+          name: run_id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Run state
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RunState'
+              example:
+                run_id: stub-run-id
+                generation: 0
+                best_fitness: 0
+                best_genome:
+                  instructions:
+                    - op: "NOP"
+                      arg: null
+                seed: 12345
+                population: 50
+                generations: 100
+                mutation_rate: 0.05
+                task: sample-task
+  /runs/{run_id}/step:
+    post:
+      summary: Step run one generation
+      parameters:
+        - in: path
+          name: run_id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Run state after stepping
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RunState'
+              example:
+                run_id: stub-run-id
+                generation: 1
+                best_fitness: 0.5
+                best_genome:
+                  instructions:
+                    - op: "PUSH"
+                      arg: 1.0
+                seed: 12345
+                population: 50
+                generations: 100
+                mutation_rate: 0.05
+                task: sample-task
+  /runs/{run_id}/history:
+    get:
+      summary: Get run history
+      parameters:
+        - in: path
+          name: run_id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Run history
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RunHistoryResponse'
+              example:
+                run_id: stub-run-id
+                task: sample-task
+                points:
+                  - generation: 0
+                    best_fitness: 0.1
+                  - generation: 1
+                    best_fitness: 0.2
+  /runs/{run_id}/advance:
+    post:
+      summary: Advance run multiple generations
+      parameters:
+        - in: path
+          name: run_id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RunAdvanceRequest'
+            example:
+              steps: 5
+      responses:
+        '200':
+          description: Run state after advancing
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RunState'
+              example:
+                run_id: stub-run-id
+                generation: 5
+                best_fitness: 0.7
+                best_genome:
+                  instructions:
+                    - op: "PUSH"
+                      arg: 1.0
+                seed: 12345
+                population: 50
+                generations: 100
+                mutation_rate: 0.05
+                task: sample-task
+  /score:
+    post:
+      summary: Score genomes
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ScoreRequest'
+            example:
+              task: sample-task
+              genomes:
+                - instructions:
+                    - op: "NOP"
+                      arg: null
+      responses:
+        '200':
+          description: Fitness scores
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ScoreResponse'
+              example:
+                fitness: [0, 0.1, 0.5]
+components:
+  schemas:
+    Instruction:
+      type: object
+      properties:
+        op:
+          type: string
+        arg:
+          type: number
+          nullable: true
+      required:
+        - op
+      example:
+        op: "NOP"
+        arg: null
+    Genome:
+      type: object
+      properties:
+        instructions:
+          type: array
+          items:
+            $ref: '#/components/schemas/Instruction'
+      required:
+        - instructions
+      example:
+        instructions:
+          - op: "NOP"
+            arg: null
+    RunConfig:
+      type: object
+      properties:
+        seed:
+          type: integer
+        population:
+          type: integer
+        generations:
+          type: integer
+        mutation_rate:
+          type: number
+        task:
+          type: string
+      required:
+        - seed
+        - population
+        - generations
+        - mutation_rate
+        - task
+      example:
+        seed: 12345
+        population: 50
+        generations: 100
+        mutation_rate: 0.05
+        task: sample-task
+    RunState:
+      type: object
+      properties:
+        run_id:
+          type: string
+        generation:
+          type: integer
+        best_fitness:
+          type: number
+        best_genome:
+          $ref: '#/components/schemas/Genome'
+        seed:
+          type: integer
+          format: int64
+        population:
+          type: integer
+          format: int32
+        generations:
+          type: integer
+          format: int32
+        mutation_rate:
+          type: number
+          format: float
+        task:
+          type: string
+      required:
+        - run_id
+        - generation
+        - best_fitness
+        - best_genome
+        - seed
+        - population
+        - generations
+        - mutation_rate
+        - task
+      example:
+        run_id: stub-run-id
+        generation: 0
+        best_fitness: 0
+        best_genome:
+          instructions:
+            - op: "NOP"
+              arg: null
+        seed: 12345
+        population: 50
+        generations: 100
+        mutation_rate: 0.05
+        task: sample-task
+    RunHistoryPoint:
+      type: object
+      properties:
+        generation:
+          type: integer
+          format: int32
+        best_fitness:
+          type: number
+      required:
+        - generation
+        - best_fitness
+    RunHistoryResponse:
+      type: object
+      properties:
+        run_id:
+          type: string
+        task:
+          type: string
+        points:
+          type: array
+          items:
+            $ref: '#/components/schemas/RunHistoryPoint'
+      required:
+        - run_id
+        - task
+        - points
+      example:
+        run_id: stub-run-id
+        task: sample-task
+        points:
+          - generation: 0
+            best_fitness: 0.1
+          - generation: 1
+            best_fitness: 0.2
+    RunAdvanceRequest:
+      type: object
+      properties:
+        steps:
+          type: integer
+          format: int32
+      required:
+        - steps
+    ScoreRequest:
+      type: object
+      properties:
+        task:
+          type: string
+        genomes:
+          type: array
+          items:
+            $ref: '#/components/schemas/Genome'
+      required:
+        - task
+        - genomes
+      example:
+        task: sample-task
+        genomes:
+          - instructions:
+              - op: "NOP"
+                arg: null
+    ScoreResponse:
+      type: object
+      properties:
+        fitness:
+          type: array
+          items:
+            type: number
+      required:
+        - fitness
+      example:
+        fitness: [0, 0.1, 0.5]

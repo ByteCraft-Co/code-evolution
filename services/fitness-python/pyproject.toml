@@ -1,0 +1,16 @@
+[tool.poetry]
+name = "fitness-python"
+version = "0.1.0"
+description = "Fitness scoring service"
+authors = ["Your Name <you@example.com>"]
+packages = [{ include = "fitness_service" }]
+
+[tool.poetry.dependencies]
+python = ">=3.10"
+fastapi = "^0.115.0"
+uvicorn = "^0.30.0"
+pydantic = "^2.8.0"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
